@@ -6,9 +6,9 @@ import Data.Ord (Down (..))
 input :: IO [[Int]]
 input =
     sortOn (Down . sum)
-        . map (map (read :: String -> Int))
-        . filter (/= [""])
-        . groupBy (\a b -> a /= "" && b /= "")
+        . map (map read)
+        . filter (not . any null)
+        . groupBy (\a b -> [] `notElem` [a, b])
         . lines
         <$> readFile "input1.txt"
 

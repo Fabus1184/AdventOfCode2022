@@ -1,4 +1,4 @@
-module Main where
+module Main (main) where
 
 import qualified Day01 (p1, p2)
 
