@@ -10,7 +10,7 @@ input =
         . filter (not . any null)
         . groupBy (\a b -> [] `notElem` [a, b])
         . lines
-        <$> readFile "input1.txt"
+        <$> readFile "input01.txt"
 
 p1 :: IO Int
 p1 = sum . head <$> input
