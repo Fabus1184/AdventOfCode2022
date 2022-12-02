@@ -48,7 +48,7 @@ totalScore :: [(RPS, RPS)] -> Int
 totalScore = sum . map (uncurry myScore)
 
 input :: [(Char, a)] -> IO [(RPS, a)]
-input s = map (\l -> (read [head l], fromJust $ lookup (l !! 2) s)) . lines <$> readFile "input02.txt"
+input s = map (\[a, _, b] -> (read [a], fromJust $ lookup b s)) . lines <$> readFile "input02.txt"
 
 p1 :: IO Int
 p1 = totalScore <$> input strategy1
