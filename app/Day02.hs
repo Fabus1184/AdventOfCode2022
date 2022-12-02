@@ -1,4 +1,5 @@
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TupleSections #-}
 
 module Day02 (p1, p2) where
@@ -9,21 +10,20 @@ data Move = Rock | Paper | Scissors deriving (Eq, Show, Enum)
 
 instance Read Move where
     readsPrec :: Int -> ReadS Move
-    readsPrec _ "A" = [(Rock, "")]
-    readsPrec _ "B" = [(Paper, "")]
-    readsPrec _ "C" = [(Scissors, "")]
-    readsPrec _ _ = []
+    readsPrec _ =
+        (: []) . (,"") . \case
+            "A" -> Rock
+            "B" -> Paper
+            "C" -> Scissors
+            _ -> undefined
 
 data Outcome = Loss | Draw | Win deriving (Eq, Show, Enum)
 
 myOutcome :: Move -> Move -> Outcome
-myOutcome Rock Paper = Win
-myOutcome Rock Scissors = Loss
-myOutcome Paper Rock = Loss
-myOutcome Paper Scissors = Win
-myOutcome Scissors Rock = Win
-myOutcome Scissors Paper = Loss
-myOutcome _ _ = Draw
+myOutcome a b
+    | a == b = Draw
+    | succ (fromEnum a) `mod` 3 == fromEnum b = Win
+    | otherwise = Loss
 
 totalScore :: [(Move, Move)] -> Int
 totalScore = sum . map (\(a, b) -> succ (fromEnum b) + (3 * fromEnum (myOutcome a b)))
