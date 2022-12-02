@@ -24,12 +24,15 @@ executable AdventOfCode2022
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
-    other-modules:    Day01
+    other-modules:    Day01, Day02
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
     build-depends:    base ^>=4.15.1.0
                     , extra
+                    , split
+                    , base-unicode-symbols
+                    , bifunctors
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options:      -Wall -Werror -Wextra
