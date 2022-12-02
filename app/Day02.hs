@@ -1,11 +1,8 @@
 {-# LANGUAGE InstanceSigs #-}
-{-# LANGUAGE TupleSections #-}
 
 module Day02 (p1, p2) where
 
-import Data.Biapplicative (biliftA2)
 import Data.Maybe (fromJust)
-import Data.Tuple.Extra (both)
 
 data RPS
     = Rock
@@ -21,10 +18,10 @@ instance Read RPS where
     readsPrec _ _ = []
 
 data Outcome
-    = Win
+    = Loss
     | Draw
-    | Loss
-    deriving (Eq, Show)
+    | Win
+    deriving (Eq, Show, Enum)
 
 strategy1 :: [(Char, RPS)]
 strategy1 = [('X', Rock), ('Y', Paper), ('Z', Scissors)]
@@ -44,22 +41,17 @@ myOutcome _ _ = Draw
 findMove :: Outcome -> RPS -> RPS
 findMove o r = head [m | m <- [Rock ..], myOutcome r m == o]
 
-scores :: RPS -> RPS -> (Int, Int)
-scores a b =
-    let k = case myOutcome a b of
-            Win -> (0, 6)
-            Draw -> (3, 3)
-            Loss -> (6, 0)
-     in biliftA2 (+) (+) (both (succ . fromEnum) (a, b)) k
+myScore :: RPS -> RPS -> Int
+myScore a b = succ (fromEnum b) + (3 * fromEnum (myOutcome a b))
 
-myScore :: [(RPS, RPS)] -> Int
-myScore = sum . map (snd . uncurry scores)
+totalScore :: [(RPS, RPS)] -> Int
+totalScore = sum . map (uncurry myScore)
 
 input :: [(Char, a)] -> IO [(RPS, a)]
 input s = map (\l -> (read [head l], fromJust $ lookup (l !! 2) s)) . lines <$> readFile "input02.txt"
 
 p1 :: IO Int
-p1 = myScore <$> input strategy1
+p1 = totalScore <$> input strategy1
 
 p2 :: IO Int
-p2 = myScore . map (\(m, o) -> (m,) $ findMove o m) <$> input strategy2
+p2 = totalScore . map (\(m, o) -> (m, findMove o m)) <$> input strategy2
