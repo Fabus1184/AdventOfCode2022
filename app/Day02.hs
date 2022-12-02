@@ -26,11 +26,11 @@ data Outcome
     | Loss
     deriving (Eq, Show)
 
-strategy1 :: Char -> RPS
-strategy1 x = fromJust $ lookup x [('X', Rock), ('Y', Paper), ('Z', Scissors)]
+strategy1 :: [(Char, RPS)]
+strategy1 = [('X', Rock), ('Y', Paper), ('Z', Scissors)]
 
-strategy2 :: Char -> Outcome
-strategy2 x = fromJust $ lookup x [('X', Loss), ('Y', Draw), ('Z', Win)]
+strategy2 :: [(Char, Outcome)]
+strategy2 = [('X', Loss), ('Y', Draw), ('Z', Win)]
 
 myOutcome :: RPS -> RPS -> Outcome
 myOutcome Rock Paper = Win
@@ -55,8 +55,8 @@ scores a b =
 myScore :: [(RPS, RPS)] -> Int
 myScore = sum . map (snd . uncurry scores)
 
-input :: (Char -> a) -> IO [(RPS, a)]
-input s = map (\l -> (read [head l], s $ l !! 2)) . lines <$> readFile "input02.txt"
+input :: [(Char, a)] -> IO [(RPS, a)]
+input s = map (\l -> (read [head l], fromJust $ lookup (l !! 2) s)) . lines <$> readFile "input02.txt"
 
 p1 :: IO Int
 p1 = myScore <$> input strategy1
