@@ -1,14 +1,14 @@
 module Day01 (p1, p2) where
 
-import Data.List (groupBy, sortOn)
+import Data.List (sortOn)
+import Data.List.Extra (splitOn)
 import Data.Ord (Down (..))
 
 input :: IO [Int]
 input =
     sortOn Down
         . map (sum . map read)
-        . filter (not . any null)
-        . groupBy (\a b -> [] `notElem` [a, b])
+        . splitOn [[]]
         . lines
         <$> readFile "input01.txt"
 
