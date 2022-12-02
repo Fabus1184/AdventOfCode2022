@@ -1,4 +1,5 @@
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE TupleSections #-}
 
 module Day02 (p1, p2) where
 
@@ -34,4 +35,4 @@ p1 :: IO Int
 p1 = totalScore <$> input [('X', Rock), ('Y', Paper), ('Z', Scissors)]
 
 p2 :: IO Int
-p2 = totalScore . map (\(m, o) -> (m, head [x | x <- [Rock ..], myOutcome m x == o])) <$> input [('X', Loss), ('Y', Draw), ('Z', Win)]
+p2 = totalScore . map (\(m, o) -> (m,) $ head [x | x <- [Rock ..], myOutcome m x == o]) <$> input [('X', Loss), ('Y', Draw), ('Z', Win)]
