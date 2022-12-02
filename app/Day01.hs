@@ -1,11 +1,11 @@
 module Day01 (p1, p2) where
 
-import Data.List (groupBy, sort)
+import Data.List (groupBy, sortOn)
+import Data.Ord (Down (..))
 
 input :: IO [Int]
 input =
-    reverse
-        . sort
+    sortOn Down
         . map (sum . map read)
         . filter (not . any null)
         . groupBy (\a b -> [] `notElem` [a, b])
