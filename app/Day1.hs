@@ -10,7 +10,7 @@ input =
         . map (sum . map read)
         . splitOn [[]]
         . lines
-        <$> readFile "input01.txt"
+        <$> readFile "input1.txt"
 
 p1 :: IO Int
 p1 = head <$> input
