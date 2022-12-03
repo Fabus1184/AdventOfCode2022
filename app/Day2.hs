@@ -2,7 +2,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TupleSections #-}
 
-module Day02 (p1, p2) where
+module Day2 (p1, p2) where
 
 import Data.Maybe (fromJust)
 
