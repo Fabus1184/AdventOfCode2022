@@ -7,9 +7,12 @@ module Main (main) where
 import qualified Day1
 import qualified Day2
 import qualified Day3
+import qualified Day4
 
+import Control.Applicative (Applicative (liftA2))
 import Control.Monad (when)
 import Control.Monad.Extra (mapMaybeM)
+import Data.Tuple.Extra (fst3, snd3)
 import Formatting (formatToString, (%))
 import Formatting.ShortFormatters (d)
 import Language.Haskell.TH (integerL, listE, litE, lookupValueName, tupE, varE)
@@ -28,10 +31,10 @@ main = do
     as <- map read <$> getArgs
     let solutions' =
             filter
-                ( \(day', part', _) -> case as of
-                    [day, part] -> (day', part') == (day, part)
-                    [day] -> day' == day
-                    _ -> True
+                ( case as of
+                    [day, part] -> (== (day, part)) . liftA2 (,) fst3 snd3
+                    [day] -> (== day) . fst3
+                    _ -> const True
                 )
                 solutions
     when (null solutions') $ error "No solutions"
