@@ -11,8 +11,8 @@ readPair xs =
 input :: IO [([Int], [Int])]
 input = map readPair . lines <$> readFile "input4.txt"
 
-p1 :: IO Int
-p1 = length . filter (\(a, b) -> any null [a \\ b, b \\ a]) <$> input
+p1 :: IO String
+p1 = show . length . filter (\(a, b) -> any null [a \\ b, b \\ a]) <$> input
 
-p2 :: IO Int
-p2 = length . filter (not . uncurry disjoint) <$> input
+p2 :: IO String
+p2 = show . length . filter (not . uncurry disjoint) <$> input

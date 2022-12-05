@@ -12,8 +12,8 @@ input =
         . lines
         <$> readFile "input1.txt"
 
-p1 :: IO Int
-p1 = head <$> input
+p1 :: IO String
+p1 = show . head <$> input
 
-p2 :: IO Int
-p2 = sum . take 3 <$> input
+p2 :: IO String
+p2 = show . sum . take 3 <$> input

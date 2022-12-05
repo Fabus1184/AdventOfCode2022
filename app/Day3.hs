@@ -12,8 +12,8 @@ readPrio c
 input :: IO [[Int]]
 input = map (map readPrio) . lines <$> readFile "input3.txt"
 
-p1 :: IO Int
-p1 = sum . map (head . uncurry intersect . ((`div` 2) . length >>= splitAt)) <$> input
+p1 :: IO String
+p1 = show . sum . map (head . uncurry intersect . ((`div` 2) . length >>= splitAt)) <$> input
 
-p2 :: IO Int
-p2 = sum . map (head . foldl1 intersect) . chunksOf 3 <$> input
+p2 :: IO String
+p2 = show . sum . map (head . foldl1 intersect) . chunksOf 3 <$> input
