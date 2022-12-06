@@ -47,7 +47,7 @@ mkttake n = do
     x <- newName "x"
     ts <- replicateM n (newName "a")
     s <- newName "s"
-    let l = map (flip ($>) specifiedSpec . plainTV) $ s : ts
+    let l = map (($> specifiedSpec) . plainTV) $ s : ts
     let cxt = imapM (\i t -> fieldT (succ i) (s, s, t, t)) ts
     sequence
         [ sigD name $ forallT l cxt $ funT2 (varT s) (tupleT' n $ map varT ts)
@@ -61,7 +61,7 @@ funT :: [Q Type] -> Q Type
 funT = foldr1 (appT . appT arrowT)
 
 funT2 :: Q Type -> Q Type -> Q Type
-funT2 a = appT (appT arrowT a)
+funT2 = appT . appT arrowT
 
 tupleT' :: Int -> [Q Type] -> Q Type
 tupleT' n = foldl appT (tupleT n)

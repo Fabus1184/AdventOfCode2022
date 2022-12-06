@@ -9,7 +9,6 @@ f n =
         . (+ n)
         . fromJust
         . findIndex (nub >>= (==))
-        . takeWhile ((== n) . length)
         . map (take n)
         . tails
 
