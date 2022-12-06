@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TupleSections #-}
@@ -10,33 +11,48 @@ import qualified Day3
 import qualified Day4
 import qualified Day5
 
-import Control.Applicative (Applicative (liftA2))
-import Control.Monad (when)
+import Advent (AoC (AoCInput, AoCSubmit), defaultAoCOpts, mkDay_, runAoC)
+import Configuration.Dotenv (defaultConfig, loadFile)
+import Control.Monad (liftM4, when)
 import Control.Monad.Extra (mapMaybeM)
-import Data.Tuple.Extra (fst3, snd3)
+import Data.Text (unpack)
 import Formatting (formatToString, (%))
-import Formatting.ShortFormatters (d, s)
-import Language.Haskell.TH (integerL, listE, litE, lookupValueName, tupE, varE)
+import Formatting.ShortFormatters (s)
+import Language.Haskell.TH (listE, lookupValueName, stringE, tupE, varE)
+import Language.Haskell.TH.Syntax (showName)
+import Lib (tmap4, untup4)
 import System.Environment (getArgs)
 
-solutions :: [(Int, Int, IO String)]
+solutions :: [(Int, Int, String, String -> String)]
 solutions =
     $( mapMaybeM
-        (\(day, part) -> ((day,part,) <$>) <$> lookupValueName ("Day" <> show day <> ".p" <> show part))
-        [(day, part) | day <- [1 :: Int .. 25], part <- [1 :: Int, 2]]
-        >>= listE . map (\(day, n, x) -> tupE [litE (integerL (fromIntegral day)), litE (integerL (fromIntegral n)), varE x])
+        ( \(a, b, c) -> do
+            lookupValueName c >>= \case
+                Nothing -> pure Nothing
+                Just n -> Just <$> liftM4 (,,,) [|a|] [|b|] (stringE $ showName n) (varE n)
+        )
+        [(day, part, "Day" <> show day <> "." <> "p" <> show part) | day <- [1 .. 25] :: [Int], part <- [1, 2] :: [Int]]
+        >>= listE . map (tupE . untup4 . tmap4 (pure, pure, pure, pure))
      )
 
 main :: IO ()
 main = do
-    as <- map read <$> getArgs
+    Just sk <- lookup "SESSION_KEY" <$> loadFile defaultConfig
+    as <- map read <$> getArgs :: IO [Int]
+    let opts = defaultAoCOpts 2022 sk
     let solutions' =
             filter
                 ( case as of
-                    [day, part] -> (== (day, part)) . liftA2 (,) fst3 snd3
-                    [day] -> (== day) . fst3
+                    [day, part] -> \(d, p, _, _) -> d == day && p == part
+                    [day] -> \(d, _, _, _) -> d == day
                     _ -> const True
                 )
                 solutions
     when (null solutions') $ error "No solutions"
-    mapM_ (\(d', p', s') -> s' >>= putStrLn . formatToString ("Day" % d % " p" % d % ": " % s) d' p') solutions'
+    mapM_
+        ( \(day, part, name, solution) -> do
+            res <- either (error . show) unpack <$> (runAoC opts . AoCInput . mkDay_ . fromIntegral $ day)
+            putStrLn $ formatToString (s % ": " % s) name (solution res)
+            either print print =<< runAoC opts (AoCSubmit (mkDay_ $ fromIntegral day) (toEnum $ pred part) (solution res))
+        )
+        solutions'

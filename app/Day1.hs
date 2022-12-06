@@ -4,16 +4,13 @@ import Data.List (sortOn)
 import Data.List.Extra (splitOn)
 import Data.Ord (Down (..))
 
-input :: IO [Int]
-input =
+readInput :: String -> [Int]
+readInput =
     sortOn Down
         . map (sum . map read)
         . splitOn [[]]
         . lines
-        <$> readFile "input1.txt"
 
-p1 :: IO String
-p1 = show . head <$> input
-
-p2 :: IO String
-p2 = show . sum . take 3 <$> input
+p1, p2 :: String -> String
+p1 = show . head . readInput
+p2 = show . sum . take 3 . readInput

@@ -36,6 +36,9 @@ executable AdventOfCode2022
                     , transformers
                     , ilist
                     , lens
+                    , advent-of-code-api
+                    , text
+                    , dotenv
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options:      -Wall -Wextra

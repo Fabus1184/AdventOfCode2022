@@ -28,11 +28,9 @@ myOutcome a b
 totalScore :: [(Move, Move)] -> Int
 totalScore = sum . map (\(a, b) -> succ (fromEnum b) + (3 * fromEnum (myOutcome a b)))
 
-input :: [(Char, a)] -> IO [(Move, a)]
-input s = map (\[a, _, b] -> (read [a], fromJust $ lookup b s)) . lines <$> readFile "input2.txt"
+readInput :: [(Char, a)] -> String -> [(Move, a)]
+readInput s = map (\[a, _, b] -> (read [a], fromJust $ lookup b s)) . lines
 
-p1 :: IO String
-p1 = show . totalScore <$> input [('X', Rock), ('Y', Paper), ('Z', Scissors)]
-
-p2 :: IO String
-p2 = show . totalScore . map (\(m, o) -> (m,) $ head [x | x <- [Rock ..], myOutcome m x == o]) <$> input [('X', Loss), ('Y', Draw), ('Z', Win)]
+p1, p2 :: String -> String
+p1 = show . totalScore <$> readInput [('X', Rock), ('Y', Paper), ('Z', Scissors)]
+p2 = show . totalScore . map (\(m, o) -> (m,) $ head [x | x <- [Rock ..], myOutcome m x == o]) <$> readInput [('X', Loss), ('Y', Draw), ('Z', Win)]
