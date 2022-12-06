@@ -1,7 +1,6 @@
 module Day1 (p1, p2) where
 
-import Data.List (sortOn)
-import Data.List.Extra (splitOn)
+import Data.List.Extra (sortOn, splitOn)
 import Data.Ord (Down (..))
 
 readInput :: String -> [Int]

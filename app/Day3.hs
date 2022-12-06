@@ -1,8 +1,7 @@
 module Day3 (p1, p2) where
 
 import Data.Char (ord)
-import Data.List (intersect)
-import Data.List.Extra (chunksOf)
+import Data.List.Extra (chunksOf, intersect)
 
 readPrio :: Char -> Int
 readPrio c

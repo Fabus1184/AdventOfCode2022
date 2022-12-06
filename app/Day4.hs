@@ -1,7 +1,6 @@
 module Day4 (p1, p2) where
 
-import Data.List ((\\))
-import Data.List.Extra (disjoint, splitOn)
+import Data.List.Extra (disjoint, splitOn, (\\))
 
 readPair :: String -> ([Int], [Int])
 readPair xs =

@@ -2,8 +2,7 @@ module Day5 (p1, p2) where
 
 import Control.Lens (ix, (%~), (&))
 import Data.Char (isAlpha, isNumber)
-import Data.List (transpose)
-import Data.List.Extra (splitOn)
+import Data.List.Extra (splitOn, transpose)
 import Lib (if', tmap2, tmap3, tup2, tup3)
 
 readStack :: [String] -> [[Char]]
