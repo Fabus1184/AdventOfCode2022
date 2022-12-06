@@ -13,20 +13,20 @@ import qualified Day5
 
 import Advent (AoC (AoCInput, AoCSubmit), defaultAoCOpts, mkDay_, runAoC)
 import Configuration.Dotenv (defaultConfig, loadFile)
-import Control.Monad (liftM4, when)
-import Control.Monad.Extra (mapMaybeM)
+import Control.Lens ((^.), _1)
+import Control.Monad.Extra (liftM4, mapMaybeM, when)
 import Data.Text (unpack)
 import Formatting (formatToString, (%))
 import Formatting.ShortFormatters (s)
 import Language.Haskell.TH (listE, lookupValueName, stringE, tupE, varE)
 import Language.Haskell.TH.Syntax (showName)
-import Lib (tmap4, untup4)
+import Lib (tmap4, ttake2, untup2, untup4)
 import System.Environment (getArgs)
 
 solutions :: [(Int, Int, String, String -> String)]
 solutions =
     $( mapMaybeM
-        ( \(a, b, c) -> do
+        ( \(a, b, c) ->
             lookupValueName c >>= \case
                 Nothing -> pure Nothing
                 Just n -> Just <$> liftM4 (,,,) [|a|] [|b|] (stringE $ showName n) (varE n)
@@ -43,8 +43,8 @@ main = do
     let solutions' =
             filter
                 ( case as of
-                    [day, part] -> \(d, p, _, _) -> d == day && p == part
-                    [day] -> \(d, _, _, _) -> d == day
+                    [day] -> (== day) . (^. _1)
+                    [_, _] -> (== as) . untup2 . ttake2
                     _ -> const True
                 )
                 solutions

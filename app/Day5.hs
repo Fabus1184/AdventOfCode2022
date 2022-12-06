@@ -23,5 +23,5 @@ go p = show . map head . uncurry (foldl run) . readInput
          in s & (ix b %~ drop a) . (ix c %~ (container ++))
 
 p1, p2 :: String -> String
-p1 = go False
-p2 = go True
+p1 = go True
+p2 = go False
