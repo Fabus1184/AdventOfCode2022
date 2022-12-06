@@ -1,6 +1,5 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Lib where
 
@@ -18,16 +17,6 @@ import Control.Lens (
  )
 import Control.Monad.Extra (concatMapM)
 import LibTH (mktmap, mkttake, mktup, mkuntup)
-
-instance Semigroup Int where
-    (<>) :: Int -> Int -> Int
-    (<>) = (+)
-
-instance Monoid Int where
-    mempty :: Int
-    mempty = 0
-    mappend :: Int -> Int -> Int
-    mappend = (+)
 
 $(concatMapM mktup [1 .. 10])
 $(concatMapM mkuntup [1 .. 10])

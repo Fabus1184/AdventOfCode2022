@@ -10,6 +10,7 @@ import qualified Day2
 import qualified Day3
 import qualified Day4
 import qualified Day5
+import qualified Day6
 
 import Advent (AoC (AoCInput, AoCSubmit), defaultAoCOpts, mkDay_, runAoC)
 import Configuration.Dotenv (defaultConfig, loadFile)
@@ -53,6 +54,6 @@ main = do
         ( \(day, part, name, solution) -> do
             res <- either (error . show) unpack <$> (runAoC opts . AoCInput . mkDay_ . fromIntegral $ day)
             putStrLn $ formatToString (s % ": " % s) name (solution res)
-            either print print =<< runAoC opts (AoCSubmit (mkDay_ $ fromIntegral day) (toEnum $ pred part) (solution res))
+            either (error . show) ((>>) (putStr "=> ") . print . snd) =<< runAoC opts (AoCSubmit (mkDay_ $ fromIntegral day) (toEnum $ pred part) (solution res))
         )
         solutions'
