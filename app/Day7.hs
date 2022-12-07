@@ -8,9 +8,10 @@
 
 module Day7 (p1, p2) where
 
-import Control.Lens (FoldableWithIndex, FunctorWithIndex, TraversableWithIndex, ifind, ix, makeLenses, (%=), (%~), (&), (.=), (^.), _1, _2, _3)
+import Control.Lens (ix, makeLenses, (%=), (%~), (&), (.=), (^.), _1, _2, _3)
 import Control.Monad (unless)
 import Control.Monad.Trans.State (State, execState, get)
+import Data.List (findIndex)
 import Data.Tuple.Extra (thd3)
 import Lib ()
 
@@ -19,7 +20,7 @@ data Dir a = Dir
     , _dirFiles :: [a]
     , _dirDirs :: [Dir a]
     }
-    deriving (Traversable, Foldable, Functor, FunctorWithIndex Int, TraversableWithIndex Int, FoldableWithIndex Int)
+    deriving (Foldable)
 $(makeLenses ''Dir)
 
 type FileSystem = Dir Int
@@ -28,9 +29,9 @@ type Path = [String]
 insertFile :: Path -> Int -> FileSystem -> FileSystem
 insertFile [] f fs = fs & dirFiles %~ (f :)
 insertFile (x : xs) f fs =
-    fs & case ifind (const $ (== x) . (^. dirName)) (fs ^. dirDirs) of
+    fs & case findIndex ((== x) . (^. dirName)) (fs ^. dirDirs) of
         Nothing -> dirDirs %~ (insertFile xs f (Dir x [] []) :)
-        Just (i', _) -> (dirDirs . ix i') %~ insertFile xs f
+        Just i' -> (dirDirs . ix i') %~ insertFile xs f
 
 parse :: State (Path, [String], FileSystem) ()
 parse = do
@@ -41,7 +42,7 @@ parse = do
         ["cd", dir'] -> _1 %= (++ [dir'])
         ["ls"] -> do
             let entries = takeWhile ((/= '$') . head) xs
-            mapM_ ((_3 %=) . insertFile path . (read . head . words)) $ filter ((/= "dir") . head . words) entries
+            mapM_ ((_3 %=) . insertFile path . (read . head . words)) . filter ((/= "dir") . head . words) $ entries
             _2 .= drop (length entries) xs
         _ -> error $ "Unknown command: " <> cmd
     k' <- (^. _2) <$> get
