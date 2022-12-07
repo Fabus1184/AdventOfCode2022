@@ -1,5 +1,6 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Lib where
 
@@ -14,9 +15,14 @@ import Control.Lens (
     Field7 (..),
     Field8 (..),
     Field9 (..),
+    Identity,
  )
 import Control.Monad.Extra (concatMapM)
 import LibTH (mktmap, mkttake, mktup, mkuntup)
+
+instance MonadFail Identity where
+    fail :: String -> Identity a
+    fail = error
 
 $(concatMapM mktup [1 .. 10])
 $(concatMapM mkuntup [1 .. 10])
