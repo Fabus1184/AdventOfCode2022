@@ -11,6 +11,7 @@ import qualified Day3
 import qualified Day4
 import qualified Day5
 import qualified Day6
+import qualified Day7
 
 import Advent (AoC (AoCInput, AoCSubmit), defaultAoCOpts, mkDay_, runAoC)
 import Configuration.Dotenv (defaultConfig, loadFile)
