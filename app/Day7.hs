@@ -42,8 +42,8 @@ parse = do
         ["cd", dir'] -> _1 %= (++ [dir'])
         ["ls"] -> do
             let (entries, rest) = span ((/= '$') . head) xs
-            mapM_ ((_3 %=) . insertFile path . (read . head . words)) . filter ((/= "dir") . head . words) $ entries
             _2 .= rest
+            mapM_ ((_3 %=) . insertFile path . (read . head . words)) . filter ((/= "dir") . head . words) $ entries
         _ -> error $ "Unknown command: " <> cmd
     k' <- (^. _2) <$> get
     unless (null k') parse
