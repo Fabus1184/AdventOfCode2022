@@ -6,7 +6,7 @@ import Data.Functor ((<&>))
 import Lib ((<$$>))
 
 readInput :: String -> [[Int]]
-readInput = lines <&> (read . pure <$$>)
+readInput = (read . pure <$$>) . lines
 
 directions :: (Int, Int) -> [[Int]] -> [[Int]]
 directions (row, col) s =
