@@ -26,7 +26,7 @@ scenicScore (row, col) =
     (^. ix row . ix col)
         >>= \x ->
             product
-                . map (foldr (\k acc -> if k < x then succ acc else 1) 0 . reverse)
+                . map (foldr (\k -> if k < x then succ else const 1) 0 . reverse)
                 . directions (row, col)
 
 ps :: (Enum a, Num a) => a -> [(a, a)]
