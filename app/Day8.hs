@@ -22,12 +22,7 @@ visible :: (Int, Int) -> [[Int]] -> Bool
 visible (row, col) = (^. ix row . ix col) >>= (directions (row, col) <&>) . any . all . (>)
 
 scenicScore :: (Int, Int) -> [[Int]] -> Int
-scenicScore (row, col) =
-    (^. ix row . ix col)
-        >>= \x ->
-            product
-                . map (foldr (\k -> if k < x then succ else const 1) 0 . reverse)
-                . directions (row, col)
+scenicScore (row, col) = (^. ix row . ix col) >>= \x -> product . map (foldr (\k -> if k < x then succ else const 1) 0 . reverse) . directions (row, col)
 
 ps :: (Enum a, Num a) => a -> [(a, a)]
 ps n = [(row, col) | row <- [0 .. pred n], col <- [0 .. pred n]]
