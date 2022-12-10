@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
@@ -18,6 +19,7 @@ import Control.Lens (
     Identity,
  )
 import Control.Monad.Extra (concatMapM)
+import Data.Tuple.Extra (both)
 import LibTH (mktmap, mkttake, mktup, mkuntup)
 
 instance MonadFail Identity where
@@ -30,7 +32,29 @@ instance Semigroup Int where
 
 instance Monoid Int where
     mempty :: Int
-    mempty = error "mempty Int"
+    mempty = 0
+
+instance Num a => Num ((,) a a) where
+    (+) :: (a, a) -> (a, a) -> (a, a)
+    (+) (x, y) (x', y') = (x + x', y + y')
+
+    (*) :: (a, a) -> (a, a) -> (a, a)
+    (*) = error "(*), (a, a)"
+
+    (-) :: (a, a) -> (a, a) -> (a, a)
+    (-) (x, y) (x', y') = (x - x', y - y')
+
+    negate :: (a, a) -> (a, a)
+    negate = both negate
+
+    abs :: (a, a) -> (a, a)
+    abs = both abs
+
+    signum :: (a, a) -> (a, a)
+    signum = error "signum (a, a)"
+
+    fromInteger :: Integer -> (a, a)
+    fromInteger x = (fromInteger x, fromInteger x)
 
 $(concatMapM mktup [1 .. 10])
 $(concatMapM mkuntup [1 .. 10])

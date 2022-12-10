@@ -1,81 +1,50 @@
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LambdaCase #-}
 
 module Day9 (p1, p2) where
 
 import Control.Arrow ((***))
-import Data.Bifunctor (first, second)
+
+import Data.Bifunctor (second)
 import Data.List (nub)
-import GHC.IO (unsafePerformIO)
+import Data.Tuple.Extra (both, first)
+import Lib ()
 
-data Direction = U | D | L | R deriving (Show)
-
+data Direction = U | D | L | R deriving (Eq, Show, Read)
 type Position = (Int, Int)
+type Rope = [Position]
 
-instance Read Direction where
-    readsPrec :: Int -> ReadS Direction
-    readsPrec _ = \case
-        'U' : s -> [(U, s)]
-        'D' : s -> [(D, s)]
-        'L' : s -> [(L, s)]
-        'R' : s -> [(R, s)]
-        _ -> []
+directionalize :: Position -> Position -> [Direction]
+directionalize (x1, y1) (x2, y2) = map snd $ filter fst [(x1 < x2, R), (x1 > x2, L), (y1 < y2, U), (y1 > y2, D)]
 
-move :: (Direction, Int) -> Position -> (Position, [Position])
-move (d, n) h@(x, y)
-    | n == 0 = (h, [])
-    | otherwise = second (h' :) $ move (d, pred n) h'
+direction :: [Direction] -> Position -> Position
+direction = foldl1 (.) . map (\case U -> second succ; D -> second pred; L -> first pred; R -> first succ)
+
+distance :: Position -> Position -> Float
+distance p p' = sqrt . fromIntegral . uncurry (+) . both (^ (2 :: Int)) $ p' - p
+
+move :: Direction -> Rope -> Rope
+move dir ((x, y) : h' : tl) = let k = direction [dir] (x, y) in k : move' k (h' : tl)
   where
-    h' = case d of
-        U -> (x, succ y)
-        D -> (x, pred y)
-        L -> (pred x, y)
-        R -> (succ x, y)
+    move' :: Position -> Rope -> Rope
+    move' _ [] = []
+    move' to (k : ks)
+        | distance k to <= sqrt 2 = k : move' k ks
+        | otherwise = let kk = direction (directionalize k to) k in kk : move' kk ks
+move _ _ = error "move: invalid rope"
 
 readInput :: String -> (Direction, Int)
 readInput = (read *** read) . splitAt 1
 
-showTrail :: [Position] -> String
-showTrail trail =
-    let minx = -20
-        maxx = 20
-        miny = -20
-        maxy = 20
-     in unlines
-            . map
-                ( \y ->
-                    map
-                        ( \x ->
-                            if (x, y) == (0, 0)
-                                then 'O'
-                                else
-                                    if (x, y) `elem` trail
-                                        then 'X'
-                                        else '.'
-                        )
-                        [minx .. maxx]
-                )
-            $ [maxy, pred maxy .. miny]
-
-test :: String
-test = "R 4\nU 4\nL 3\nD 1\nR 4\nD 1\nL 5\nR 2"
-
-test2 :: String
-test2 = "R 5\nU 8\nL 8\nD 3\nR 17\nD 10\nL 25\nU 20"
-
-p1, p2 :: String -> String
-p1 =
+f :: Int -> String -> String
+f n =
     show
-        . pred
         . length
         . nub
         . fst
-        . first ((0, 0) :)
-        . foldl (\(hs, h) m -> let (h', hs') = move m h in (hs ++ init hs', h')) ([], (0, 0))
-        . map readInput
+        . foldl (\(t, acc) m -> ((: t) . last) >>= (,) $ move m acc) ([], replicate n mempty)
+        . concatMap (uncurry (flip replicate) . readInput)
         . lines
-p2 s = unsafePerformIO $ do
-    let s' = map readInput $ lines test2
-    let (trail, _) = first (((0, 0) :) . drop 10) (foldl (\(hs, h) m -> let (h', hs') = move m h in (init hs' ++ hs, h')) ([], (0, 0)) s')
-    putStrLn $ showTrail trail
-    error ""
+
+p1, p2 :: String -> String
+p1 = f 2
+p2 = f 10

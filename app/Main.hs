@@ -26,6 +26,7 @@ import Language.Haskell.TH (listE, lookupValueName, stringE, tupE, varE)
 import Language.Haskell.TH.Syntax (showName)
 import Lib (tmap4, ttake2, untup2, untup4)
 import System.Environment (getArgs)
+import System.TimeIt (timeIt)
 
 solutions :: [(Int, Int, String, String -> String)]
 solutions =
@@ -56,7 +57,7 @@ main = do
     mapM_
         ( \(day, part, name, solution) -> do
             res <- either (error . show) unpack <$> (runAoC opts . AoCInput . mkDay_ . fromIntegral $ day)
-            putStrLn $ formatToString (s % ": " % s) name (solution res)
+            timeIt $ putStrLn $ formatToString (s % ": " % s) name (solution res)
             either (error . show) ((>>) (putStr "=> ") . print . snd) =<< runAoC opts (AoCSubmit (mkDay_ $ fromIntegral day) (toEnum $ pred part) (solution res))
         )
         solutions'
