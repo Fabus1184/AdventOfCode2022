@@ -3,7 +3,6 @@
 module Day9 (p1, p2) where
 
 import Control.Arrow ((***))
-
 import Data.Bifunctor (second)
 import Data.List (nub)
 import Data.Tuple.Extra (both, first)
