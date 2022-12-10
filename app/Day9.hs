@@ -3,6 +3,7 @@
 module Day9 (p1, p2) where
 
 import Control.Arrow ((***))
+
 import Data.Bifunctor (second)
 import Data.List (nub)
 import Data.Tuple.Extra (both, first)
@@ -18,16 +19,13 @@ directionalize (x1, y1) (x2, y2) = map snd $ filter fst [(x1 < x2, R), (x1 > x2,
 direction :: [Direction] -> Position -> Position
 direction = foldl1 (.) . map (\case U -> second succ; D -> second pred; L -> first pred; R -> first succ)
 
-distance :: Position -> Position -> Float
-distance p p' = sqrt . fromIntegral . uncurry (+) . both (^ (2 :: Int)) $ p' - p
-
 move :: Direction -> Rope -> Rope
 move dir ((x, y) : h' : tl) = let k = direction [dir] (x, y) in k : move' k (h' : tl)
   where
     move' :: Position -> Rope -> Rope
     move' _ [] = []
     move' to (k : ks)
-        | distance k to <= sqrt 2 = k : move' k ks
+        | uncurry (&&) (both (<= 1) $ abs (k - to)) = k : move' k ks
         | otherwise = let kk = direction (directionalize k to) k in kk : move' kk ks
 move _ _ = error "move: invalid rope"
 
