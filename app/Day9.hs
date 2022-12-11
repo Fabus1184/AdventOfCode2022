@@ -31,16 +31,15 @@ move _ _ = error "move: invalid rope"
 readInput :: String -> (Direction, Int)
 readInput = (read *** read) . splitAt 1
 
-f :: Int -> String -> String
+f :: Int -> String -> Int
 f n =
-    show
-        . length
+    length
         . nub
         . fst
         . foldl (\(t, acc) m -> ((: t) . last) >>= (,) $ move m acc) ([], replicate n mempty)
         . concatMap (uncurry (flip replicate) . readInput)
         . lines
 
-p1, p2 :: String -> String
+p1, p2 :: String -> Int
 p1 = f 2
 p2 = f 10

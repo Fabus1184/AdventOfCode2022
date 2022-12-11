@@ -10,6 +10,6 @@ readInput =
         . splitOn [[]]
         . lines
 
-p1, p2 :: String -> String
-p1 = show . head . readInput
-p2 = show . sum . take 3 . readInput
+p1, p2 :: String -> Int
+p1 = head . readInput
+p2 = sum . take 3 . readInput

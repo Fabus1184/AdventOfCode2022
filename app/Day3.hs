@@ -11,6 +11,6 @@ readPrio c
 readInput :: String -> [[Int]]
 readInput = map (map readPrio) . lines
 
-p1, p2 :: String -> String
-p1 = show . sum . map (head . uncurry intersect . ((`div` 2) . length >>= splitAt)) . readInput
-p2 = show . sum . map (head . foldl1 intersect) . chunksOf 3 . readInput
+p1, p2 :: String -> Int
+p1 = sum . map (head . uncurry intersect . ((`div` 2) . length >>= splitAt)) . readInput
+p2 = sum . map (head . foldl1 intersect) . chunksOf 3 . readInput

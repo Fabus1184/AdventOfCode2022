@@ -54,6 +54,6 @@ dirs fs = fs : concatMap dirs (fs ^. dirDirs)
 readInput :: String -> FileSystem
 readInput = thd3 . execState parse . ([],,Dir "/" [] []) . tail . lines
 
-p1, p2 :: String -> String
-p1 = show . sum . filter (<= 100000) . map sum . dirs . readInput
-p2 s = show . minimum . filter (>= sum (readInput s) - 40000000) . map sum . dirs . readInput $ s
+p1, p2 :: String -> Int
+p1 = sum . filter (<= 100000) . map sum . dirs . readInput
+p2 s = minimum . filter (>= sum (readInput s) - 40000000) . map sum . dirs . readInput $ s

@@ -1,6 +1,8 @@
+{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Lib where
@@ -21,6 +23,23 @@ import Control.Lens (
 import Control.Monad.Extra (concatMapM)
 import Data.Tuple.Extra (both)
 import LibTH (mktmap, mkttake, mktup, mkuntup)
+
+data Showable = forall a. MyShow a => MkShowable a
+
+instance MyShow Showable where
+    myShow :: Showable -> String
+    myShow (MkShowable a) = myShow a
+
+class MyShow a where
+    myShow :: a -> String
+
+instance MyShow Int where
+    myShow :: Int -> String
+    myShow = show
+
+instance MyShow String where
+    myShow :: String -> String
+    myShow = id
 
 instance MonadFail Identity where
     fail :: String -> Identity a

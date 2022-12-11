@@ -27,6 +27,6 @@ scenicScore (row, col) = (^. ix row . ix col) >>= \x -> product . map (foldr (\k
 ps :: (Enum a, Num a) => a -> [(a, a)]
 ps n = [(row, col) | row <- [0 .. pred n], col <- [0 .. pred n]]
 
-p1, p2 :: String -> String
-p1 = show . liftA2 ((length .) . filter) (flip visible) (ps . length) . readInput
-p2 = show . maximum . liftA2 map (flip scenicScore) (ps . length) . readInput
+p1, p2 :: String -> Int
+p1 = liftA2 ((length .) . filter) (flip visible) (ps . length) . readInput
+p2 = maximum . liftA2 map (flip scenicScore) (ps . length) . readInput

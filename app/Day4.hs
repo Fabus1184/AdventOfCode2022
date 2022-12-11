@@ -10,6 +10,6 @@ readPair xs =
 readInput :: String -> [([Int], [Int])]
 readInput = map readPair . lines
 
-p1, p2 :: String -> String
-p1 = show . length . filter (\(a, b) -> any null [a \\ b, b \\ a]) . readInput
-p2 = show . length . filter (not . uncurry disjoint) . readInput
+p1, p2 :: String -> Int
+p1 = length . filter (\(a, b) -> any null [a \\ b, b \\ a]) . readInput
+p2 = length . filter (not . uncurry disjoint) . readInput

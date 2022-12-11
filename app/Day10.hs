@@ -16,8 +16,9 @@ clock NOOP x = [x]
 f :: String -> [Int]
 f = reverse . foldr ((. head) . clock >=> (++)) [1] . reverse . readInput
 
-p1, p2 :: String -> String
-p1 s = show . sum . map (\i -> i * f s !! pred i) $ [20, 60 .. 220]
+p1 :: String -> Int
+p1 s = sum . map (\i -> i * f s !! pred i) $ [20, 60 .. 220]
+p2 :: String -> String
 p2 s =
     unlines
         . ([] :)

@@ -75,12 +75,11 @@ round k m =
             ms' = foldl (\x (i', t) -> x & ix t . items %~ (i' :)) ms its
          in (ms' & ix i .~ m', length its)
 
-f :: (Int, Bool) -> String -> String
+f :: (Int, Bool) -> String -> Int
 f (n, k) s =
     let (ms, ds) = unzip $ readInput s
         modulo = product ds
-     in show
-            . product
+     in product
             . take 2
             . sortOn Down
             . snd
@@ -88,6 +87,6 @@ f (n, k) s =
             . iterate (\(ms', ns) -> second (zipWith (+) ns) $ round (modulo, k) ms')
             $ (ms, map (const 0) ms)
 
-p1, p2 :: String -> String
+p1, p2 :: String -> Int
 p1 = f (20, True)
 p2 = f (10000, False)

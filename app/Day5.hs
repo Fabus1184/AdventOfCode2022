@@ -15,11 +15,11 @@ readInput :: String -> ([[Char]], [(Int, Int, Int)])
 readInput = tmap2 (readStack, map readMove) . tup2 . splitOn [[]] . lines
 
 go :: Bool -> String -> String
-go p = show . map head . uncurry (foldl run) . readInput
-  where
-    run s (a, b, c) =
-        let container = if' p reverse $ take a (s !! b)
-         in s & (ix b %~ drop a) . (ix c %~ (container ++))
+go p = map head . uncurry (foldl run) . readInput
+ where
+  run s (a, b, c) =
+    let container = if' p reverse $ take a (s !! b)
+     in s & (ix b %~ drop a) . (ix c %~ (container ++))
 
 p1, p2 :: String -> String
 p1 = go True
