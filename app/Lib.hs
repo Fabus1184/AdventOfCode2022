@@ -1,8 +1,13 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Lib where
@@ -33,13 +38,13 @@ instance MyShow Showable where
 class MyShow a where
     myShow :: a -> String
 
-instance MyShow Int where
-    myShow :: Int -> String
-    myShow = show
-
-instance MyShow String where
+instance {-# OVERLAPS #-} MyShow String where
     myShow :: String -> String
     myShow = id
+
+instance {-# OVERLAPPABLE #-} (Show a) => MyShow a where
+    myShow :: a -> String
+    myShow = show
 
 instance MonadFail Identity where
     fail :: String -> Identity a
