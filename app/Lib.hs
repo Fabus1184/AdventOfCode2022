@@ -1,4 +1,6 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveFoldable #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -28,6 +30,8 @@ import Control.Lens (
 import Control.Monad.Extra (concatMapM)
 import Data.Tuple.Extra (both)
 import LibTH (mktmap, mkttake, mktup, mkuntup)
+
+newtype Grid a = Grid [[a]] deriving (Show, Eq, Foldable, Functor)
 
 data Showable = forall a. MyShow a => MkShowable a
 

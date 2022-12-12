@@ -1,55 +1,40 @@
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE TupleSections #-}
 
 module Day12 (p1, p2) where
 
-import Algorithm.Search (aStar)
-import Control.Applicative (liftA3)
+import Algorithm.Search (aStar, dijkstra)
+import Control.Applicative (liftA2, liftA3)
 import Data.Char (ord)
-import Data.Ix (inRange)
+import Data.Foldable (find)
 import Data.Maybe (fromJust)
-import Lib (if', (<$$>))
+import Data.Tuple.Extra (uncurry3)
+import Lib (if')
 
-data Position = Height Int | Start | End deriving (Show, Eq)
+data Position = Position
+    { position :: (Int, Int)
+    , height :: Int
+    , isStart :: Bool
+    , isEnd :: Bool
+    }
+    deriving (Show, Eq, Ord)
 
-readInput :: String -> [[Position]]
-readInput = ((\case 'S' -> Start; 'E' -> End; c -> Height (ord c - ord 'a')) <$$>) . lines
+readInput :: String -> [Position]
+readInput = concat . zipWith (\y l -> zipWith (\x -> uncurry3 (Position (x, y)) . \case 'S' -> (,,) 0 True False; 'E' -> (,,) 25 False True; c -> (,,) (ord c - ord 'a') False False) [0 ..] l) [0 ..] . lines
 
-fields :: [[Position]] -> [(Position, (Int, Int))]
-fields = concatMap (\(y, row) -> zipWith (\x -> (,(x, y))) [0 ..] row) . zip [0 ..]
+neighbors :: Bool -> [Position] -> Position -> [Position]
+neighbors k ps p = filter (\p' -> if' k negate (height p' - height p) <= 1 && distance (position p) (position p') == 1) ps
 
-neighbors :: Bool -> [[Position]] -> (Int, Int) -> [(Int, Int)]
-neighbors k ps (x, y) =
-    filter (\(x', y') -> if' k negate (height (ps !! y' !! x') - height (ps !! y !! x)) <= 1)
-        . filter inBounds
-        $ [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
-  where
-    height :: Position -> Int
-    height = \case
-        Height h -> h
-        Start -> 0
-        End -> 26
-    inBounds :: (Int, Int) -> Bool
-    inBounds (x', y') = inRange (0, length ps - 1) y' && inRange (0, length (head ps) - 1) x'
-
-end :: [[Position]] -> (Int, Int)
-end = snd . head . filter ((== End) . fst) . fields
-
-start :: [[Position]] -> (Int, Int)
-start = snd . head . filter ((== Start) . fst) . fields
+distance :: (Int, Int) -> (Int, Int) -> Int
+distance (x, y) (x', y') = abs (x - x') + abs (y - y')
 
 p1, p2 :: String -> Int
 p1 =
     fst
         . fromJust
-        . liftA3 (\ns e s -> aStar ns (\_ _ -> 1) (const 0) (== e) s) (neighbors False) end start
+        . liftA3 (\ns e -> aStar ns (\_ _ -> 1) (distance (position e) . position) (== e)) (neighbors False) (fromJust . find isEnd) (fromJust . find isStart)
         . readInput
 p2 =
     fst
         . fromJust
-        . liftA3
-            (\ns e p -> aStar ns (\_ _ -> 1) (const 0) p e)
-            (neighbors True)
-            end
-            (\ps (x, y) -> ps !! y !! x `elem` [Start, Height 0])
+        . liftA2 (\ns e -> dijkstra ns (\_ _ -> 1) ((== 0) . height) e) (neighbors True) (fromJust . find isEnd)
         . readInput
