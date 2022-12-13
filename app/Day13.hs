@@ -8,7 +8,7 @@ import Data.List.Extra (chunksOf, sort)
 import Data.List.Index (imap)
 import Data.Tuple.Extra (both)
 import Lib (tup2, untup2)
-import Text.ParserCombinators.ReadP (ReadP, char, get, munch, readP_to_S, sepBy)
+import Text.ParserCombinators.ReadP (char, get, munch, readP_to_S, sepBy)
 
 data Packet = List [Packet] | Value Int deriving (Show, Eq)
 
@@ -21,16 +21,15 @@ instance Ord Packet where
 
 instance Read Packet where
     readsPrec :: Int -> ReadS Packet
-    readsPrec _ = readP_to_S readPacket
+    readsPrec _ = readP_to_S r
+      where
+        r =
+            get >>= \case
+                '[' -> List <$> sepBy r (char ',') <* char ']'
+                c -> Value . read . (c :) <$> munch isDigit
 
 readInput :: String -> [(Packet, Packet)]
 readInput = map (both read . tup2) . chunksOf 2 . filter (not . null) . lines
-
-readPacket :: ReadP Packet
-readPacket =
-    get >>= \case
-        '[' -> List <$> sepBy readPacket (char ',') <* char ']'
-        c -> Value . read . (c :) <$> munch isDigit
 
 p1, p2 :: String -> Int
 p1 = sum . imap (\i (a, b) -> if a < b then i + 1 else 0) . readInput
