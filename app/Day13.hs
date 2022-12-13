@@ -19,8 +19,12 @@ instance Ord Packet where
     compare (Value a) (List bs) = compare [Value a] bs
     compare (List as) (Value b) = compare as [Value b]
 
+instance Read Packet where
+    readsPrec :: Int -> ReadS Packet
+    readsPrec _ = readP_to_S readPacket
+
 readInput :: String -> [(Packet, Packet)]
-readInput = map (both (fst . head . readP_to_S readPacket) . tup2) . chunksOf 2 . filter (not . null) . lines
+readInput = map (both read . tup2) . chunksOf 2 . filter (not . null) . lines
 
 readPacket :: ReadP Packet
 readPacket =
@@ -38,4 +42,4 @@ p2 =
         . (ds :)
         . readInput
   where
-    ds = (List [List [Value 2]], List [List [Value 6]])
+    ds = (read "[[2]]", read "[[6]]")
