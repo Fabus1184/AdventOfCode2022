@@ -16,8 +16,8 @@ instance Ord Packet where
     compare :: Packet -> Packet -> Ordering
     compare (Value a) (Value b) = compare a b
     compare (List as) (List bs) = compare as bs
-    compare (Value a) (List bs) = compare [Value a] bs
-    compare (List as) (Value b) = compare as [Value b]
+    compare a@(Value _) b = compare (List [a]) b
+    compare a b@(Value _) = compare a (List [b])
 
 instance Read Packet where
     readsPrec :: Int -> ReadS Packet
