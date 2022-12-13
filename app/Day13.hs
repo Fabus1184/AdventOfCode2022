@@ -41,4 +41,4 @@ p2 =
         . (ds :)
         . readInput
   where
-    ds = (read "[[2]]", read "[[6]]")
+    ds = both read ("[[2]]", "[[6]]")
