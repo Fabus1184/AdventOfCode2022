@@ -42,6 +42,8 @@ executable AdventOfCode2022
                     , containers
                     , timeit
                     , search-algorithms
+                    , array
+                    , vector
 
     hs-source-dirs:   app
     default-language: Haskell2010

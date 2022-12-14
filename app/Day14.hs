@@ -1,117 +1,56 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TupleSections #-}
 
 module Day14 (p1, p2) where
 
-import Control.Lens (makeLenses, (%~), (.~))
+import Control.Applicative (liftA2)
+import Control.Lens (makeLenses, (%~), (&), (^.))
 import Data.Char (isDigit)
-import Data.Function ((&))
-import Data.Ix (Ix (inRange))
-import Data.List (sortOn)
-import Data.List.Extra (maximumOn)
-import Data.Ord (Down (..))
-import GHC.IO (unsafePerformIO)
-import Text.ParserCombinators.ReadP (ReadP, char, munch1, readP_to_S, sepBy, string)
+import Data.List.Extra (maximumOn, nubOrd)
+import Data.Set (Set, fromList, insert, notMember, size)
+import Text.ParserCombinators.ReadP (char, munch1, readP_to_S, sepBy, string)
 
 type Position = (Int, Int)
-data Sand = Sand
-    { _position :: Position
-    , _rest :: Bool
-    }
-    deriving (Show, Eq)
-$(makeLenses ''Sand)
-
-newtype Path = Path
-    { _path :: [Position]
-    }
-    deriving (Show, Eq)
-$(makeLenses ''Path)
-
+newtype Path = Path [Position]
 data Cave = Cave
-    { _rocks :: [Path]
-    , _sand :: [Sand]
+    { _stuff :: Set Position
+    , _nRocks :: Int
+    , _abyss :: Int
+    , _nabyss :: Int
     }
-    deriving (Eq)
 $(makeLenses ''Cave)
-
-instance Show Cave where
-    show :: Cave -> String
-    show (Cave rocks sand) =
-        let (minx, maxx, miny, maxy) = (450, 550, 0, 175)
-         in unlines
-                [ show y
-                    ++ [ case (x, y) of
-                        (500, 0) -> '+'
-                        _ -> if any (isInPath (x, y) . _path) rocks then '#' else if (x, y) `elem` map _position sand then 'o' else '.'
-                       | x <- [minx .. maxx]
-                       ]
-                | y <- [miny .. maxy]
-                ]
 
 instance Read Path where
     readsPrec :: Int -> ReadS Path
-    readsPrec _ = readP_to_S readPath
-
-readPosition :: ReadP Position
-readPosition = do
-    a <- read <$> munch1 isDigit
-    _ <- char ','
-    b <- read <$> munch1 isDigit
-    pure (a, b)
-
-readPath :: ReadP Path
-readPath = Path <$> sepBy readPosition (string " -> ")
-
-isInPath :: Position -> [Position] -> Bool
-isInPath _ [] = False
-isInPath p [p'] = p == p'
-isInPath p@(px, py) ((x1, y1) : (x2, y2) : ps) =
-    (y1 == y2 && py == y1 && inRange (min x1 x2, max x1 x2) px)
-        || (x1 == x2 && px == x1 && inRange (min y1 y2, max y1 y2) py)
-        || isInPath p ((x2, y2) : ps)
+    readsPrec _ = readP_to_S $ Path <$> sepBy (liftA2 (,) (read <$> munch1 isDigit <* char ',') (read <$> munch1 isDigit)) (string " -> ")
 
 readInput :: String -> Cave
-readInput = (`Cave` []) . map read . lines
-
-stepSand :: Cave -> Cave
-stepSand (Cave rocks sand) =
-    Cave rocks
-        $ foldl
-            ( \sands s ->
-                ( if _rest s
-                    then s
-                    else
-                        let s' = f s sands
-                         in if s' == s then s & rest .~ True else s'
-                )
-                    : sands
-            )
-            []
-        $ sortOn (Down . snd . _position) (Sand (500, 0) False : sand)
+readInput s =
+    let paths = nubOrd $ concatMap (tracePath . read) $ lines s
+     in Cave (fromList paths) (length paths) (succ $ snd $ maximumOn snd paths) 0
   where
-    f (Sand (x, y) _) sands
-        | isValid (x, y + 1) = Sand (x, y + 1) False
-        | isValid (x - 1, y + 1) = Sand (x - 1, y + 1) False
-        | isValid (x + 1, y + 1) = Sand (x + 1, y + 1) False
-        | otherwise = Sand (x, y) False
-      where
-        isSand p = p `elem` map _position sands
-        isRock p = any (isInPath p . _path) rocks
-        isValid p = not (isRock p) && not (isSand p)
+    tracePath :: Path -> [Position]
+    tracePath (Path ((x1, y1) : (x2, y2) : ps))
+        | x1 == x2 = map (x1,) [min y1 y2 .. max y1 y2] ++ tracePath (Path ((x2, y2) : ps))
+        | y1 == y2 = map (,y1) [min x1 x2 .. max x1 x2] ++ tracePath (Path ((x2, y2) : ps))
+        | otherwise = error "invalid path"
+    tracePath (Path ps) = ps
 
-isInAbyss :: Int -> Sand -> Bool
-isInAbyss _ (Sand _ True) = False
-isInAbyss n (Sand (_, y) False) = y > n
+simulateWhile :: (Cave -> Bool) -> Cave -> Cave
+simulateWhile p c = head $ dropWhile p $ iterate (fallSand (500, 0)) c
+
+fallSand :: Position -> Cave -> Cave
+fallSand (x, y) c
+    | y == c ^. abyss = c & stuff %~ insert (x, y) & nabyss %~ succ
+    | isNotStuff (x, y + 1) = fallSand (x, y + 1) c
+    | isNotStuff (x - 1, y + 1) = fallSand (x - 1, y + 1) c
+    | isNotStuff (x + 1, y + 1) = fallSand (x + 1, y + 1) c
+    | otherwise = c & stuff %~ insert (x, y)
+  where
+    isNotStuff :: Position -> Bool
+    isNotStuff p = p `notMember` (c ^. stuff)
 
 p1, p2 :: String -> Int
-p1 s =
-    let s' = readInput s
-        abyss = snd $ maximumOn snd $ concatMap _path $ _rocks s'
-        end = last $ takeWhile (not . any (isInAbyss abyss) . _sand) $ iterate stepSand s'
-     in length $ filter _rest $ _sand end
-p2 s =
-    let s' = readInput s
-        abyss = (2 +) $ snd $ maximumOn snd $ concatMap _path $ _rocks s'
-        s'' = s' & rocks %~ (Path [(-10000, abyss), (10000, abyss)] :)
-        end = head $ dropWhile ((Sand (500, 0) True `notElem`) . _sand) $ iterate stepSand s''
-     in length $ filter _rest $ _sand end
+p1 = liftA2 (\n -> pred . subtract n . size . (^. stuff)) (^. nRocks) (simulateWhile ((== 0) . (^. nabyss))) . readInput
+p2 = liftA2 (\n -> subtract n . size . (^. stuff)) (^. nRocks) (simulateWhile (((500, 0) `notMember`) . (^. stuff))) . readInput
