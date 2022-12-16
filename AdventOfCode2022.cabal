@@ -49,4 +49,4 @@ executable AdventOfCode2022
 
     hs-source-dirs:   app
     default-language: Haskell2010
-    ghc-options:      -Wall -Wextra 
+    ghc-options:      -Wall -Wextra -O2 -optc-Ofast

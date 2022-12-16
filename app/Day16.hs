@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TupleSections #-}
@@ -5,146 +6,120 @@
 
 module Day16 (p1, p2) where
 
-import Control.Lens (at, folded, makeLenses, view, (%~), (&), (+~), (.~), (<&>), (?~), (^.), _Just)
-import Control.Lens.Fold (sumOf)
+import Control.Lens (folded, ix, makeLenses, sumOf, (&), (+~), (-~), (.~), (^.))
 import Control.Monad (unless, when)
-import Control.Monad.Trans.State.Lazy (State, execState, get, modify)
+import Control.Monad.Trans.State.Strict (State, execState, get, modify)
 import Data.Char (isDigit)
 import Data.List.Extra (splitOn)
 import Data.Map.Strict (Map, fromList, insert, (!))
-import Lib (if')
 import Prelude hiding (lookup)
 
+type Position = String
+
 data Valve = Valve
-    { _name :: String
-    , _flowrate :: Int
-    , _next :: [Valve]
+    { _name :: !Position
+    , _flowrate :: !Int
+    , _nexts :: ![Position]
     }
+    deriving (Show, Eq, Ord)
 $(makeLenses ''Valve)
 
 data Player = Player
-    { _position :: Valve
-    , _locked :: Bool
+    { _position :: !Position
+    , _locked :: !Bool
     }
+    deriving (Show, Eq, Ord)
 $(makeLenses ''Player)
 
-data Cave = CS
+data Cave = Cave
     { _players :: [Player]
-    , _time :: Int
-    , _released :: Int
+    , _time :: !Int
+    , _released :: !Int
+    , _valves :: !(Map Position Valve)
     }
+    deriving (Show, Eq, Ord)
 $(makeLenses ''Cave)
 
-readValves :: String -> [Valve]
+readValves :: String -> Map Position Valve
 readValves =
-    map
-        ( \s ->
-            let ws = words s
-                nexts = map (take 2) (words $ drop 1 (splitOn "valve" s !! 1))
-             in Valve
-                    (ws !! 1)
-                    (read $ filter isDigit s)
-                    (filter ((`elem` nexts) . view name) $ readValves s)
-        )
+    fromList
+        . map
+            ( (\x -> (,x) $ x ^. name)
+                . ( \s' ->
+                        let ws = words s'
+                            nexts' = map (take 2) (words $ drop 1 (splitOn "valve" s' !! 1))
+                         in Valve (ws !! 1) (read $ filter isDigit s') nexts'
+                  )
+            )
         . lines
 
-findAllPaths :: Cave -> State (Map Int Int) ()
-findAllPaths cs
-    | cs ^. time > 30 = pure ()
-    | all ((== 0) . view flowrate) (cs ^. valves) = pure ()
+{-# INLINE possibleMoves #-}
+possibleMoves :: Int -> Int -> Cave -> [Cave]
+possibleMoves t p !c =
+    concat $
+        concatMap
+            ( \n ->
+                [ [ c
+                    & time +~ 1
+                    & player . locked .~ False
+                  | (c ^. players) !! p ^. locked
+                  ]
+                , [ c
+                    & time +~ 1
+                    & player . position .~ n
+                  | not ((c ^. players) !! p ^. locked)
+                  ]
+                , [ c
+                    & time +~ 1
+                    & player . position .~ n
+                    & player . locked .~ True
+                    & valves . ix n . flowrate .~ 0
+                    & released +~ valve' n ^. flowrate * (t - time' - 2)
+                  | not ((c ^. players) !! p ^. locked)
+                  , valve' n ^. flowrate /= 0
+                  ]
+                ]
+            )
+            pnexts'
+  where
+    player = players . ix p
+    valve' _p = (c ^. valves) ! _p
+    time' = c ^. time
+    pnexts' = valve' ((c ^. players) !! p ^. position) ^. nexts
+
+findAllPaths1 :: Cave -> State (Map Int Int) ()
+findAllPaths1 !c
+    | c ^. time > 30 = pure ()
     | otherwise = do
         m' <- get
-        unless (cs ^. released < m' ! (cs ^. time - 3)) $ do
-            when (cs ^. released > m' ! (cs ^. time)) $ modify (insert (cs ^. time) (cs ^. released))
-            let curr = last (cs ^. path)
-                nexts = (cs ^. valves) ! curr ^. next
-            mapM_ findAllPaths $
-                concatMap
-                    ( \nm ->
-                        (cs & path %~ (++ [nm]) & time %~ succ)
-                            : [ cs
-                                & path %~ (++ [nm])
-                                & time +~ 2
-                                & released +~ (cs ^. valves) ! nm ^. flowrate * (30 - cs ^. time - 2)
-                                & valves . at nm ?~ ((cs ^. valves) ! nm & flowrate .~ 0)
-                              | (cs ^. valves) ! nm ^. flowrate /= 0
-                              ]
-                    )
-                    nexts
+        unless (c ^. released < m' ! (time' - 4)) $! do
+            when (c ^. released > m' ! time') $! modify $! insert time' (c ^. released)
+            unless (sumOf (folded . flowrate) (c ^. valves) == 0) $! mapM_ findAllPaths1 (possibleMoves 30 0 c)
+  where
+    time' = c ^. time
 
-findAllPaths' :: Int -> Cave -> State (Map Int Int) ()
-findAllPaths' n cs2
-    | cs2 ^. time' > n = pure ()
+findAllPaths2 :: Cave -> State (Map Int Int) ()
+findAllPaths2 !c
+    | c ^. time > 26 = pure ()
     | otherwise = do
         m' <- get
-        unless (cs2 ^. released' < m' ! (cs2 ^. time' - 3)) $ do
-            when (cs2 ^. released' > m' ! (cs2 ^. time')) $ modify (insert (cs2 ^. time') (cs2 ^. released'))
-            let currMe = last (cs2 ^. pathMe)
-                currElephant = last (cs2 ^. pathElephant)
-                nextsMe = if' (cs2 ^. lockMe) (const [currMe]) $ (cs2 ^. valves') ! currMe ^. next
-                nextsElephant = if' (cs2 ^. lockElephant) (const [currElephant]) $ (cs2 ^. valves') ! currElephant ^. next
-            if sumOf (folded . flowrate) (cs2 ^. valves') == 0
-                then pure ()
-                else
-                    mapM_ (findAllPaths n) $
-                        concatMap
-                            ( \(nextNameMe, nextNameElephant) ->
-                                let li = cs2 ^. lockMe
-                                    le = cs2 ^. lockElephant
-                                 in map
-                                        ( $
-                                            cs2
-                                                & pathMe %~ (++ [nextNameMe])
-                                                & pathElephant %~ (++ [nextNameElephant])
-                                                & time' +~ 1
-                                        )
-                                        . concat
-                                        $ [ [lockMe .~ False <&> lockElephant .~ False]
-                                          , concat
-                                                [ [ released'
-                                                        +~ (cs2 ^. valves')
-                                                        ! name
-                                                        ^. flowrate
-                                                        * (26 - cs2 ^. time' - 2)
-                                                        <&> valves' . at name ?~ ((cs2 ^. valves') ! name & flowrate .~ 0)
-                                                        <&> lockMe .~ True
-                                                        <&> lockElephant .~ False
-                                                  ]
-                                                | name <- [nextNameMe, nextNameElephant]
-                                                , (cs2 ^. valves') ! name ^. flowrate /= 0
-                                                ]
-                                          , [ released' +~ (cs2 ^. valves') ! nextNameElephant ^. flowrate * (26 - cs2 ^. time' - 2)
-                                                <&> valves' . at nextNameElephant ?~ ((cs2 ^. valves') ! nextNameElephant & flowrate .~ 0)
-                                                <&> lockElephant .~ True
-                                                <&> lockMe .~ False
-                                            | (cs2 ^. valves') ! nextNameElephant ^. flowrate /= 0
-                                            , not le
-                                            ]
-                                          , [ released' +~ (cs2 ^. valves') ! nextNameMe ^. flowrate * (26 - cs2 ^. time' - 2)
-                                                <&> released' +~ (cs2 ^. valves') ! nextNameElephant ^. flowrate * (26 - cs2 ^. time' - 2)
-                                                <&> valves' . at nextNameElephant . _Just . flowrate .~ 0
-                                                <&> valves' . at nextNameMe . _Just . flowrate .~ 0
-                                                <&> lockMe .~ True
-                                                <&> lockElephant .~ True
-                                            | (cs2 ^. valves') ! nextNameMe ^. flowrate /= 0
-                                            , (cs2 ^. valves') ! nextNameElephant ^. flowrate /= 0
-                                            , not (cs2 ^. lockMe)
-                                            , not (cs2 ^. lockElephant)
-                                            , nextNameMe /= nextNameElephant
-                                            ]
-                                          ]
-                            )
-                            [(a, b) | a <- nextsMe, b <- nextsElephant]
-
-f :: (Map String Valve -> State (Map Int Int) ()) -> String -> Int
-f s =
-    maximum
-        . (`execState` fromList [(n, 0) | n <- [-10 .. 30]])
-        . s
-        . fromList
-        . map ((\x -> (x ^. name, x)) . read)
-        . lines
+        unless (c ^. released < m' ! (time' - 4)) $! do
+            when (c ^. released > m' ! time') $! modify $! insert time' (c ^. released)
+            unless (sumOf (folded . flowrate) (c ^. valves) == 0) $! do
+                mapM_ findAllPaths2 $ [e | p <- possibleMoves 26 0 c, e <- possibleMoves 26 1 (p & time -~ 1)]
+  where
+    time' = c ^. time
 
 p1, p2 :: String -> Int
-p1 = f $ \x -> findAllPaths $ CS x ["AA"] 0 0
-p2 = f $ \x -> findAllPaths' $ CS2 x ["AA"] ["AA"] 0 False False 0
+p1 =
+    maximum
+        . (`execState` fromList (zip [-4 .. 30] $! repeat 0))
+        . findAllPaths1
+        . Cave [Player "AA" False] 0 0
+        . readValves
+p2 =
+    maximum
+        . (`execState` fromList (zip [-4 .. 26] $! repeat 0))
+        . findAllPaths2
+        . Cave [Player "AA" False, Player "AA" False] 0 0
+        . readValves
