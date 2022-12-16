@@ -14,6 +14,7 @@ import qualified Day12
 import qualified Day13
 import qualified Day14
 import qualified Day15
+import qualified Day16
 import qualified Day2
 import qualified Day3
 import qualified Day4
@@ -33,7 +34,7 @@ import Formatting.ShortFormatters (s)
 import Language.Haskell.TH (appE, listE, lookupValueName, stringE, tupE, varE)
 import Language.Haskell.TH.Syntax (showName)
 import Lib (MyShow (myShow), Showable (..), tmap4, ttake2, untup2, untup4)
-import System.Environment (getArgs)
+import System.Environment (getArgs, getEnvironment)
 import System.TimeIt (timeIt)
 
 solutions :: [(Int, Int, String, String -> Showable)]
@@ -50,7 +51,8 @@ solutions =
 
 main :: IO ()
 main = do
-    Just sk <- lookup "SESSION_KEY" <$> loadFile defaultConfig
+    loadFile defaultConfig
+    Just sk <- lookup "SESSION_KEY" <$> getEnvironment
     as <- map read <$> getArgs :: IO [Int]
     let opts = defaultAoCOpts 2022 sk
     let solutions' =
