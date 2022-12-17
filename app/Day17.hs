@@ -2,18 +2,17 @@
 
 module Day17 (p1, p2) where
 
-import Control.Lens (folded, maximum1Of, maximumOf, none, _2)
-import Control.Monad (replicateM_)
-import Control.Monad.Trans.State.Strict (State, execState, get, put)
-import Data.Bifunctor (Bifunctor (second), bimap, first)
+import Control.Lens (folded, maximumOf, none, _2)
+import Data.Bifunctor (bimap, first, second)
 import Data.Ix (inRange)
+import Data.List.Extra (allSame, chunksOf)
 import Data.Maybe (fromMaybe)
 import Data.Set (Set, fromList, member, union)
 import qualified Data.Set
+import Data.Tuple.Extra (fst3)
 import Lib ()
-import System.IO.Unsafe (unsafePerformIO)
 
-type Position = (Int, Integer)
+type Position = (Int, Int)
 type Rock = Set Position
 data Jet = L | R deriving (Show, Eq)
 
@@ -44,13 +43,15 @@ placeRock r rs =
     let topRock = fromMaybe 0 $ maximumOf (folded . _2) rs
      in Data.Set.map (bimap (+ 2) (+ (topRock + 3))) r
 
-dropRock :: State (Set Position, [Jet], [Rock]) ()
+dropRock :: (Set Position, [Jet], [Rock]) -> [Set Position]
 dropRock =
-    do
-        (rs, jets, r : rocks) <- get
-        let r' = placeRock r rs
-        let (r'', jets') = go jets rs r'
-         in put (r'' `union` rs, jets', rocks ++ [r])
+    map fst3
+        . iterate
+            ( \(rs, jets, r : rocks) ->
+                let r' = placeRock r rs
+                    (r'', jets') = go jets rs r'
+                 in (r'' `union` rs, jets', rocks ++ [r])
+            )
   where
     go :: [Jet] -> Set Position -> Rock -> (Rock, [Jet])
     go (j : jets) rs r =
@@ -70,16 +71,18 @@ push :: Jet -> Rock -> Rock
 push L = Data.Set.map (first pred)
 push R = Data.Set.map (first succ)
 
-test :: String
-test = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>"
+findPeriod :: Eq a => [a] -> Int
+findPeriod xs = head $ filter (\i -> allSame $ take 3 $ chunksOf i $ drop i xs) [1 ..]
 
-p1, p2 :: String -> Integer
-p1 s = do
+p1, p2 :: String -> Int
+p1 s =
     let jets = readJets s
-    let (ps, _, _) = execState (replicateM_ 2022 dropRock) (mempty, jets, rocks)
-    maximum (Data.Set.map snd ps)
-p2 s = unsafePerformIO $ do
-    let jets = readJets test
-    let (ps, _, _) = execState (replicateM_ 1000000000000 dropRock) (mempty, jets, rocks)
-    print $ maximum (Data.Set.map snd ps)
-    error ""
+        ps = dropRock (mempty, jets, rocks) !! 2022
+     in maximum (Data.Set.map snd ps)
+p2 s =
+    let jets = readJets s
+        xs = map (maximum . Data.Set.map snd) $ tail $ dropRock (mempty, jets, rocks)
+        ds = zipWith subtract xs (tail xs)
+        p = findPeriod ds
+        n = 1000000000000
+     in (sum (take p ds) * (n `div` p)) + sum (take (n `mod` p) ds)
