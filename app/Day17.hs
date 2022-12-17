@@ -10,7 +10,6 @@ import Data.Maybe (fromMaybe)
 import Data.Set (Set, fromList, member, union)
 import qualified Data.Set
 import Data.Tuple.Extra (fst3)
-import Debug.Trace (traceShowId)
 import Lib ()
 
 type Position = (Int, Int)
@@ -77,7 +76,7 @@ findPeriod xs =
     head $
         concatMap
             ( \i ->
-                [ traceShowId (s, i)
+                [ (s, i)
                 | s <- [0 .. pred i]
                 , allSame $ take 3 $ chunksOf i $ drop s xs
                 ]
