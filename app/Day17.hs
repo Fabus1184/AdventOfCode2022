@@ -10,6 +10,7 @@ import Data.Maybe (fromMaybe)
 import Data.Set (Set, fromList, member, union)
 import qualified Data.Set
 import Data.Tuple.Extra (fst3)
+import Debug.Trace (traceShowId)
 import Lib ()
 
 type Position = (Int, Int)
@@ -47,10 +48,10 @@ dropRock :: (Set Position, [Jet], [Rock]) -> [Set Position]
 dropRock =
     map fst3
         . iterate
-            ( \(rs, jets, r : rocks) ->
+            ( \(rs, jets, r : rs') ->
                 let r' = placeRock r rs
                     (r'', jets') = go jets rs r'
-                 in (r'' `union` rs, jets', rocks ++ [r])
+                 in (r'' `union` rs, jets', rs' ++ [r])
             )
   where
     go :: [Jet] -> Set Position -> Rock -> (Rock, [Jet])
@@ -71,8 +72,17 @@ push :: Jet -> Rock -> Rock
 push L = Data.Set.map (first pred)
 push R = Data.Set.map (first succ)
 
-findPeriod :: Eq a => [a] -> Int
-findPeriod xs = head $ filter (\i -> allSame $ take 3 $ chunksOf i $ drop i xs) [1 ..]
+findPeriod :: Eq a => [a] -> (Int, Int)
+findPeriod xs =
+    head $
+        concatMap
+            ( \i ->
+                [ traceShowId (s, i)
+                | s <- [0 .. pred i]
+                , allSame $ take 3 $ chunksOf i $ drop s xs
+                ]
+            )
+            [1 ..]
 
 p1, p2 :: String -> Int
 p1 s =
@@ -83,6 +93,8 @@ p2 s =
     let jets = readJets s
         xs = map (maximum . Data.Set.map snd) $ tail $ dropRock (mempty, jets, rocks)
         ds = zipWith subtract xs (tail xs)
-        p = findPeriod ds
+        (start, p) = findPeriod ds
         n = 1000000000000
-     in (sum (take p ds) * (n `div` p)) + sum (take (n `mod` p) ds)
+     in last (take start xs)
+            + sum (take p ds) * ((n - start) `div` p)
+            + sum (take ((n - start) `mod` p) ds)

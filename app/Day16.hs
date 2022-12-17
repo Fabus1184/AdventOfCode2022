@@ -100,7 +100,7 @@ findAllPaths1 !c
 
 findAllPaths2 :: Cave -> State (Map Int Int) ()
 findAllPaths2 !c
-    | c ^. time > 26 = pure ()
+    | c ^. time > 25 = pure ()
     | otherwise = do
         m' <- get
         unless (c ^. released < m' ! (time' - 4)) $! do
